@@ -40,6 +40,9 @@ dnf install rust-libudev-devel
 - `cargo run --features bevy/dynamic_linking`
 - `cargo watch -q -c -x 'run --features bevy/dynamic_linking'`
 
+wsl ubuntu22.04:
+- ` WGPU_BACKEND=vulkan cargo run --features bevy/dynamic_linking`
+
 - 其他 Rust 视频：
     - [Jeremy Chone](https://www.youtube.com/jeremychone) 频道的每周 Rust 视频
     - [Rust 游戏开发教程](https://youtube.com/playlist?list=PL7r-PXl6ZPcCB_9zZFU0krBoGK3y5f5Vt)
