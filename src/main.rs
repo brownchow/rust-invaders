@@ -107,7 +107,7 @@ fn main() {
 		.insert_resource(ClearColor(Color::srgb(0.04, 0.04, 0.04)))
 		.add_plugins(DefaultPlugins.set(WindowPlugin {
 			primary_window: Some(Window {
-				title: "Rust 入侵者!".into(),
+				title: "Rust Invaders!".into(),
 				resolution: (598., 676.).into(),
 				// position window (for tutorial)
 				// position: WindowPosition::At(IVec2::new(2780, 4900)),
