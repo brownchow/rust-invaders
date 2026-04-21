@@ -173,7 +173,8 @@ fn movable_system(
 	mut commands: Commands,
 	time: Res<Time>,
 	win_size: Res<WinSize>,
-	mut query: Query<(Entity, &Velocity, &mut Transform, &Movable)>,
+	mut query: Query<(Entity, &Velocity, &mut Transform, &Movable), Without<Player>>,
+	mut player_query: Query<(&Velocity, &mut Transform, &SpriteSize), With<Player>>,
 ) {
 	let delta = time.delta_secs();
 	for (entity, velocity, mut transform, movable) in &mut query {
@@ -181,25 +182,30 @@ fn movable_system(
 		translation.x += velocity.x * delta * BASE_SPEED;
 		translation.y += velocity.y * delta * BASE_SPEED;
 		if movable.auto_despawn {
-			// Bevy 的 2D 坐标系统原点是在屏幕中心
-			// 当实体超出屏幕范围时，自动销毁
-			// 坐标系统：原点 (0,0) 在屏幕中心，x轴向右为正，y轴向上为正
-			// 屏幕边界：
-			// - 左边界: -win_size.w / 2
-			// - 右边界: win_size.w / 2
-			// - 上边界: win_size.h / 2
-			// - 下边界: -win_size.h / 2
-			// MARGIN: 超出屏幕边缘后的缓冲距离，避免实体刚离开屏幕就被销毁
 			const MARGIN: f32 = 200.;
-			if translation.y > win_size.h / 2. + MARGIN  // 超出上边界
-				|| translation.y < -win_size.h / 2. - MARGIN  // 超出下边界
-				|| translation.x > win_size.w / 2. + MARGIN  // 超出右边界
-				|| translation.x < -win_size.w / 2. - MARGIN  // 超出左边界
+			// 坐标系统：原点 (0,0) 在屏幕中心，x轴向右为正，y轴向上为正
+			if translation.y > win_size.h / 2. + MARGIN
+				|| translation.y < -win_size.h / 2. - MARGIN
+				|| translation.x > win_size.w / 2. + MARGIN
+				|| translation.x < -win_size.w / 2. - MARGIN
 			{
 				commands.entity(entity).despawn();
 			}
 		}
 	}
+	// 使用 clamp 函数将玩家位置限制在 [-win_width/2 + half_width, win_width/2 - half_width] 范围内
+	for (velocity, mut transform, sprite_size) in &mut player_query {
+		let scale_x = transform.scale.x;
+		let translation = &mut transform.translation;
+		translation.x += velocity.x * delta * BASE_SPEED;
+		translation.y += velocity.y * delta * BASE_SPEED;
+
+		let half_width = sprite_size.0.x * scale_x / 2.;
+		let min_x = -win_size.w / 2. + half_width;
+		let max_x = win_size.w / 2. - half_width;
+		translation.x = translation.x.clamp(min_x, max_x);
+	}
+
 }
 
 // 玩家击中敌人
