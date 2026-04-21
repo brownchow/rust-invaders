@@ -132,24 +132,21 @@ fn setup_system(
 	mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
 	query: Query<&Window, With<PrimaryWindow>>,
 ) {
-	// camera
+	// 在游戏世界中创建一个 2D 相机实体
 	commands.spawn(Camera2d);
-
 	// capture window size
-	let Ok(primary) = query.get_single() else {
-		return;
+	let primary = match query.get_single() {
+		Ok(window) => window,
+		Err(_) => return,
 	};
 	let (win_w, win_h) = (primary.width(), primary.height());
-
 	// add WinSize resource
 	let win_size = WinSize { w: win_w, h: win_h };
 	commands.insert_resource(win_size);
-
 	// create explosion texture atlas
 	let texture_handle = asset_server.load(EXPLOSION_SHEET);
 	let texture_atlas = TextureAtlasLayout::from_grid(UVec2::new(64, 64), 4, 4, None, None);
 	let explosion_layout = texture_atlases.add(texture_atlas);
-
 	// add GameTextures resource
 	let game_textures = GameTextures {
 		player: asset_server.load(PLAYER_SPRITE),
