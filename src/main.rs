@@ -16,49 +16,53 @@ mod components;
 mod enemy;
 mod player;
 
-// region:    --- Asset Constants
-
+// 玩家背景图、玩家大小、玩家激光、玩家激光大小
 const PLAYER_SPRITE: &str = "player_a_01.png";
 const PLAYER_SIZE: (f32, f32) = (144., 75.);
 const PLAYER_LASER_SPRITE: &str = "laser_a_01.png";
 const PLAYER_LASER_SIZE: (f32, f32) = (9., 54.);
 
+// 敌人背景图、敌人大小、敌人激光、敌人激光大小
 const ENEMY_SPRITE: &str = "enemy_a_01.png";
 const ENEMY_SIZE: (f32, f32) = (144., 75.);
 const ENEMY_LASER_SPRITE: &str = "laser_b_01.png";
 const ENEMY_LASER_SIZE: (f32, f32) = (17., 55.);
 
+// 爆炸背景图、爆炸长度
 const EXPLOSION_SHEET: &str = "explo_a_sheet.png";
 const EXPLOSION_LEN: usize = 16;
 
+// 精灵缩放比例
 const SPRITE_SCALE: f32 = 0.5;
-
-// endregion: --- Asset Constants
-
-// region:    --- Game Constants
-
 const BASE_SPEED: f32 = 500.;
-
+// 玩家死了后，重新出现的时间间隔，单位：秒
 const PLAYER_RESPAWN_DELAY: f64 = 2.;
+// 最大敌人数
 const ENEMY_MAX: u32 = 2;
+// 编队最大成员数
 const FORMATION_MEMBERS_MAX: u32 = 2;
 
-// endregion: --- Game Constants
-
-// region:    --- Resources
+// 当前屏幕大小
 #[derive(Resource)]
 pub struct WinSize {
 	pub w: f32,
 	pub h: f32,
 }
 
+/// 游戏纹理资源，存储所有游戏图像
 #[derive(Resource)]
 struct GameTextures {
+	// 玩家纹理
 	player: Handle<Image>,
+	// 玩家激光纹理
 	player_laser: Handle<Image>,
+	// 敌人纹理
 	enemy: Handle<Image>,
+	// 敌人激光纹理
 	enemy_laser: Handle<Image>,
+	// 爆炸布局纹理
 	explosion_layout: Handle<TextureAtlasLayout>,
+	// 爆炸纹理
 	explosion_texture: Handle<Image>,
 }
 
@@ -67,9 +71,13 @@ struct EnemyCount(u32);
 
 #[derive(Resource)]
 struct PlayerState {
-	on: bool,       // alive
-	last_shot: f64, // -1 if not shot
+	/// 是否存活，false 死亡，true 存活
+	on: bool,    
+	/// 记录玩家被击中的时间，-1 表示没有被击中
+	last_shot: f64,
 }
+
+// 类似 java 里的构造函数，初始化玩家状态为死亡状态，记录玩家被击中的时间为-1
 impl Default for PlayerState {
 	fn default() -> Self {
 		Self {
@@ -80,23 +88,26 @@ impl Default for PlayerState {
 }
 
 impl PlayerState {
+	// 玩家被击中时，调用此方法
 	pub fn shot(&mut self, time: f64) {
 		self.on = false;
 		self.last_shot = time;
 	}
+	// 玩家重新出现时，调用此方法
+	/// 重置玩家状态，将玩家设置为存活状态，记录玩家被击中的时间为-1
 	pub fn spawned(&mut self) {
 		self.on = true;
 		self.last_shot = -1.;
 	}
 }
-// endregion: --- Resources
 
+// 游戏主函数
 fn main() {
 	App::new()
 		.insert_resource(ClearColor(Color::srgb(0.04, 0.04, 0.04)))
 		.add_plugins(DefaultPlugins.set(WindowPlugin {
 			primary_window: Some(Window {
-				title: "Rust Invaders!".into(),
+				title: "Rust 入侵者!".into(),
 				resolution: (598., 676.).into(),
 				// position window (for tutorial)
 				// position: WindowPosition::At(IVec2::new(2780, 4900)),
