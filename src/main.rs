@@ -181,6 +181,7 @@ fn movable_system(
 		translation.x += velocity.x * delta * BASE_SPEED;
 		translation.y += velocity.y * delta * BASE_SPEED;
 		if movable.auto_despawn {
+			// Bevy 的 2D 坐标系统原点是在屏幕中心
 			// 当实体超出屏幕范围时，自动销毁
 			// 坐标系统：原点 (0,0) 在屏幕中心，x轴向右为正，y轴向上为正
 			// 屏幕边界：
@@ -201,6 +202,7 @@ fn movable_system(
 	}
 }
 
+// 玩家击中敌人
 #[allow(clippy::type_complexity)] // for the Query types.
 fn player_laser_hit_enemy_system(
 	mut commands: Commands,
@@ -208,35 +210,32 @@ fn player_laser_hit_enemy_system(
 	laser_query: Query<(Entity, &Transform, &SpriteSize), (With<Laser>, With<FromPlayer>)>,
 	enemy_query: Query<(Entity, &Transform, &SpriteSize), With<Enemy>>,
 ) {
+	// 已销毁的实体
 	let mut despawned_entities: HashSet<Entity> = HashSet::new();
-
-	// iterate through the lasers
+	// 遍历激光
 	for (laser_entity, laser_tf, laser_size) in laser_query.iter() {
 		if despawned_entities.contains(&laser_entity) {
 			continue;
 		}
-
 		let laser_scale = laser_tf.scale.xy();
-
-		// iterate through the enemies
+		// 遍历敌人
 		for (enemy_entity, enemy_tf, enemy_size) in enemy_query.iter() {
 			if despawned_entities.contains(&enemy_entity)
 				|| despawned_entities.contains(&laser_entity)
 			{
 				continue;
 			}
-
 			let enemy_scale = enemy_tf.scale.xy();
-
-			// determine if collision
-			let collision = Aabb2d::new(
+			// 判断是否碰撞
+			let laser_aabb = Aabb2d::new(
 				laser_tf.translation.truncate(),
 				(laser_size.0 * laser_scale) / 2.,
-			)
-			.intersects(&Aabb2d::new(
+			);
+			let enemy_aabb = Aabb2d::new(
 				enemy_tf.translation.truncate(),
 				(enemy_size.0 * enemy_scale) / 2.,
-			));
+			);
+			let collision = laser_aabb.intersects(&enemy_aabb);
 
 			// perform collision
 			if collision {
