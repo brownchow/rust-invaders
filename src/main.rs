@@ -66,6 +66,7 @@ struct GameTextures {
 	explosion_texture: Handle<Image>,
 }
 
+// 敌人个数
 #[derive(Resource)]
 struct EnemyCount(u32);
 
@@ -132,9 +133,9 @@ fn setup_system(
 	mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
 	query: Query<&Window, With<PrimaryWindow>>,
 ) {
-	// 在游戏世界中创建一个 2D 相机实体
+	// 在游戏世界中创建一个 2D 相机实体，用于2d游戏
 	commands.spawn(Camera2d);
-	// capture window size
+	// 获取窗口大小
 	let primary = match query.get_single() {
 		Ok(window) => window,
 		Err(_) => return,
@@ -143,11 +144,17 @@ fn setup_system(
 	// add WinSize resource
 	let win_size = WinSize { w: win_w, h: win_h };
 	commands.insert_resource(win_size);
-	// create explosion texture atlas
+	// 创建爆炸效果的纹理图集  atlas 地图集
 	let texture_handle = asset_server.load(EXPLOSION_SHEET);
-	let texture_atlas = TextureAtlasLayout::from_grid(UVec2::new(64, 64), 4, 4, None, None);
+	// 定义 4x4 网格
+	let texture_atlas = TextureAtlasLayout::from_grid(        
+		UVec2::new(64, 64),  // 每个精灵大小 64x64
+		4, 4,                // 4 行 4 列
+		None, None
+	);
+	// 添加到资源
 	let explosion_layout = texture_atlases.add(texture_atlas);
-	// add GameTextures resource
+	// 创建游戏纹理资源
 	let game_textures = GameTextures {
 		player: asset_server.load(PLAYER_SPRITE),
 		player_laser: asset_server.load(PLAYER_LASER_SPRITE),
@@ -156,10 +163,12 @@ fn setup_system(
 		explosion_layout,
 		explosion_texture: texture_handle,
 	};
+	// command 添加资源
 	commands.insert_resource(game_textures);
 	commands.insert_resource(EnemyCount(0));
 }
 
+// 移动系统，更新游戏世界中的实体位置
 fn movable_system(
 	mut commands: Commands,
 	time: Res<Time>,
@@ -167,19 +176,24 @@ fn movable_system(
 	mut query: Query<(Entity, &Velocity, &mut Transform, &Movable)>,
 ) {
 	let delta = time.delta_secs();
-
 	for (entity, velocity, mut transform, movable) in &mut query {
 		let translation = &mut transform.translation;
 		translation.x += velocity.x * delta * BASE_SPEED;
 		translation.y += velocity.y * delta * BASE_SPEED;
-
 		if movable.auto_despawn {
-			// despawn when out of screen
+			// 当实体超出屏幕范围时，自动销毁
+			// 坐标系统：原点 (0,0) 在屏幕中心，x轴向右为正，y轴向上为正
+			// 屏幕边界：
+			// - 左边界: -win_size.w / 2
+			// - 右边界: win_size.w / 2
+			// - 上边界: win_size.h / 2
+			// - 下边界: -win_size.h / 2
+			// MARGIN: 超出屏幕边缘后的缓冲距离，避免实体刚离开屏幕就被销毁
 			const MARGIN: f32 = 200.;
-			if translation.y > win_size.h / 2. + MARGIN
-				|| translation.y < -win_size.h / 2. - MARGIN
-				|| translation.x > win_size.w / 2. + MARGIN
-				|| translation.x < -win_size.w / 2. - MARGIN
+			if translation.y > win_size.h / 2. + MARGIN  // 超出上边界
+				|| translation.y < -win_size.h / 2. - MARGIN  // 超出下边界
+				|| translation.x > win_size.w / 2. + MARGIN  // 超出右边界
+				|| translation.x < -win_size.w / 2. - MARGIN  // 超出左边界
 			{
 				commands.entity(entity).despawn();
 			}
