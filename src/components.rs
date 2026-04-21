@@ -2,21 +2,23 @@ use bevy::math::{Vec2, Vec3};
 use bevy::prelude::Component;
 use bevy::time::{Timer, TimerMode};
 
+// Velocity 速度， x 方向速度、y 方向速度
 // region:    --- Common Components
 #[derive(Component)]
 pub struct Velocity {
 	pub x: f32,
 	pub y: f32,
 }
-
+// 是否自动消失
 #[derive(Component)]
 pub struct Movable {
 	pub auto_despawn: bool,
 }
 
+// 激光组件
 #[derive(Component)]
 pub struct Laser;
-
+// Sprite 精灵
 #[derive(Component)]
 pub struct SpriteSize(pub Vec2);
 
